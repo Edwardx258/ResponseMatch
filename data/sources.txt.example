@@ -1,0 +1,9 @@
+# Public documents to ingest as handbooks: copy to data/sources.txt, one URL per line.
+# Check each document's licence before using it. U.S. federal publications (FEMA,
+# Ready.gov) are generally public domain; many non-profit guides are copyrighted.
+#
+# Candidates to look for (find the current URLs on the publishers' sites):
+#   - FEMA CERT (Community Emergency Response Team) Basic Training participant manual
+#   - FEMA volunteer and donations management guidance
+#   - Ready.gov guides on checking on neighbours and helping people with disabilities
+#   - City of Seattle Office of Emergency Management public preparedness guides
