@@ -15,10 +15,10 @@ from typing import TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
-from .claude import StructuredClaude
 from .combine import combine
 from .config import Mode, Settings
-from .parsing import ClaudeParser, HeuristicParser, Parser
+from .llm import StructuredLLM
+from .parsing import HeuristicParser, LLMParser, Parser
 from .retrieval import HandbookStore, make_embedder, query_for
 from .rules import haversine_km, score_all
 from .schemas import (
@@ -32,7 +32,7 @@ from .schemas import (
     ServiceRequest,
     Volunteer,
 )
-from .semantic import ClaudeJudge, Judge, KeywordJudge
+from .semantic import Judge, KeywordJudge, LLMJudge
 
 
 class MatchState(TypedDict, total=False):
@@ -59,13 +59,25 @@ def load_volunteers(path: Path) -> list[Volunteer]:
     return [Volunteer.model_validate(v) for v in json.loads(path.read_text(encoding="utf-8"))]
 
 
+def make_llm(settings: Settings) -> StructuredLLM:
+    if settings.backend == "deepseek":
+        from .deepseek import DEFAULT_MODEL, StructuredDeepSeek
+
+        return StructuredDeepSeek(settings.model or DEFAULT_MODEL, base_url=settings.deepseek_base_url)
+    if settings.backend == "claude":
+        from .claude import DEFAULT_MODEL, StructuredClaude
+
+        return StructuredClaude(settings.model or DEFAULT_MODEL)
+    raise ValueError(f"unknown LLM backend: {settings.backend}")
+
+
 def build_deps(settings: Settings | None = None) -> Deps:
     settings = settings or Settings()
     if settings.backend == "heuristic":
         parser, judge = HeuristicParser(), KeywordJudge()
     else:
-        claude = StructuredClaude(settings.model)
-        parser, judge = ClaudeParser(claude), ClaudeJudge(claude)
+        llm = make_llm(settings)
+        parser, judge = LLMParser(llm), LLMJudge(llm)
     store = HandbookStore(make_embedder(settings.embedder), path=settings.chroma_path)
     if len(store) == 0 and settings.handbook_dir.exists():
         store.ingest_folder(settings.handbook_dir)

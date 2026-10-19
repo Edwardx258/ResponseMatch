@@ -75,11 +75,14 @@ def main() -> None:
 
     settings = Settings()
     labels = load_labels(args.labels)
-    stats = evaluate(build_deps(settings), labels)
+
+    deps = build_deps(settings)
+    stats = evaluate(deps, labels)
 
     if settings.backend == "heuristic":
         print("WARNING: heuristic backend - these numbers only show the harness runs. Not results.\n")
-    print(f"{len(labels)} labelled requests, backend={settings.backend}, model={settings.model}\n")
+    model = getattr(getattr(deps.parser, "llm", None), "model", "-")
+    print(f"{len(labels)} labelled requests, backend={settings.backend}, model={model}\n")
     print(f"{'mode':<12}{'recommended':>12}{'false pos':>11}{'FP rate':>9}{'recall':>8}")
     for mode, s in stats.items():
         print(f"{mode:<12}{s.recommended:>12}{s.false_positives:>11}{s.false_positive_rate:>9.2f}{s.recall:>8.2f}")

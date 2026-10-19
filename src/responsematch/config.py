@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
+Backend = Literal["claude", "deepseek", "heuristic"]
 Mode = Literal["dual_track", "weighted", "llm_only", "rule_only"]
 MODES: tuple[Mode, ...] = ("dual_track", "weighted", "llm_only", "rule_only")
 
@@ -19,11 +20,15 @@ def _env(name: str, default: str) -> str:
 
 @dataclass(frozen=True)
 class Settings:
-    # "claude" calls the Claude API; "heuristic" runs offline keyword baselines
-    backend: Literal["claude", "heuristic"] = field(
+    # which model provider runs the parser and the judge; "heuristic" = offline keyword baselines
+    backend: Backend = field(
         default_factory=lambda: _env("RESPONSEMATCH_BACKEND", "claude")  # type: ignore[arg-type]
     )
-    model: str = field(default_factory=lambda: _env("RESPONSEMATCH_MODEL", "claude-opus-5-5"))
+    # empty = the backend's default model (see claude.py / deepseek.py)
+    model: str = field(default_factory=lambda: _env("RESPONSEMATCH_MODEL", ""))
+    deepseek_base_url: str = field(
+        default_factory=lambda: _env("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
+    )
 
     volunteers_path: Path = field(
         default_factory=lambda: Path(_env("RESPONSEMATCH_VOLUNTEERS", str(ROOT / "data/sample/volunteers.json")))

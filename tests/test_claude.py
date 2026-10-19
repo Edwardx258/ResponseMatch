@@ -7,8 +7,9 @@ import anthropic
 import httpx2
 import pytest
 
-from responsematch.claude import ClaudeRefusal, StructuredClaude
-from responsematch.parsing import ClaudeParser
+from responsematch.claude import StructuredClaude
+from responsematch.llm import LLMRefusal
+from responsematch.parsing import LLMParser
 from responsematch.schemas import ServiceRequest, Urgency
 
 
@@ -34,7 +35,7 @@ PARSED = {
 
 def test_parser_sends_structured_request_with_fallback():
     captured = []
-    parser = ClaudeParser(StructuredClaude("claude-opus-5-5", client=fake_client(captured, PARSED)))
+    parser = LLMParser(StructuredClaude("claude-opus-5-5", client=fake_client(captured, PARSED)))
     out = parser.parse(ServiceRequest(id="r", text="Someone is injured", category_hint="medical"))
 
     assert out.urgency is Urgency.high and out.required_certifications == ["first aid"]
@@ -49,5 +50,5 @@ def test_parser_sends_structured_request_with_fallback():
 
 def test_refusal_raises():
     claude = StructuredClaude("claude-opus-5-5", client=fake_client([], {}, stop_reason="refusal"))
-    with pytest.raises(ClaudeRefusal):
-        ClaudeParser(claude).parse(ServiceRequest(id="r", text="x"))
+    with pytest.raises(LLMRefusal):
+        LLMParser(claude).parse(ServiceRequest(id="r", text="x"))

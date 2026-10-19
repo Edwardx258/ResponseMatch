@@ -14,14 +14,26 @@ START → parse → candidates ┬→ rule_track ──────────�
 
 | Stage | What it does | Code |
 |---|---|---|
-| parse | Claude extracts category, urgency, required skills, certifications and languages (structured outputs) | `parsing.py` |
+| parse | The LLM extracts category, urgency, required skills, certifications and languages | `parsing.py` |
 | candidates | Nearest volunteers, capped at `RESPONSEMATCH_MAX_CANDIDATES` | `graph.py` |
 | rule_track | Hard constraints (availability, range, certifications, language) and a skill/proximity score | `rules.py` |
 | retrieve | Handbook passages from ChromaDB | `retrieval.py` |
-| semantic_track | Claude judges each candidate, grounded in the passages, and cites them | `semantic.py` |
+| semantic_track | The LLM judges each candidate, grounded in the passages, and cites them | `semantic.py` |
 | combine | `dual_track`, `weighted`, `llm_only` or `rule_only` | `combine.py` |
 
-Stack: Python · LangGraph · Claude API (`claude-opus-5-5`) · ChromaDB · FastAPI.
+Stack: Python · LangGraph · ChromaDB · FastAPI, with a pluggable LLM backend.
+
+## LLM backends
+
+| `RESPONSEMATCH_BACKEND` | Default model | Structured output | Key |
+|---|---|---|---|
+| `claude` | `claude-opus-5-5` | Schema-constrained structured outputs, server-side fallback on refusals | `ANTHROPIC_API_KEY` |
+| `deepseek` | `deepseek-chat` | JSON mode; the schema is in the prompt and replies are validated, with one retry | `DEEPSEEK_API_KEY` |
+| `heuristic` | — | Keyword rules, offline; for tests and development only | none |
+
+Set `RESPONSEMATCH_MODEL` to override the model. Both LLM backends implement the same
+`StructuredLLM` interface (`llm.py`), so running `eval/run_eval.py` once per backend
+compares them on the same labelled set.
 
 ## Quick start
 
@@ -34,6 +46,9 @@ RESPONSEMATCH_BACKEND=heuristic uv run python scripts/demo.py
 
 # with Claude: set ANTHROPIC_API_KEY (or `ant auth login`), then
 uv run python scripts/demo.py
+
+# with DeepSeek
+DEEPSEEK_API_KEY=... RESPONSEMATCH_BACKEND=deepseek uv run python scripts/demo.py
 uv run uvicorn responsematch.api:app --reload            # POST /match, GET /health
 ```
 
@@ -72,4 +87,5 @@ is the next step.
 - [ ] Ingest real public handbooks; switch to a real embedding model
 - [ ] Build a labelled evaluation set
 - [ ] Measure dual_track vs llm_only; add RAGAS faithfulness
+- [ ] Compare Claude and DeepSeek on the same labelled set (quality, cost, latency)
 - [ ] Map Seattle 311 request types to categories

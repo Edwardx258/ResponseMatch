@@ -6,7 +6,7 @@ from __future__ import annotations
 import json
 from typing import Protocol
 
-from .claude import StructuredClaude
+from .llm import StructuredLLM
 from .schemas import Judgement, Judgements, ParsedRequest, Passage, ServiceRequest, Volunteer
 
 JUDGE_SYSTEM = """You help a volunteer dispatcher decide which volunteers fit a community \
@@ -29,9 +29,9 @@ def _clamp(j: Judgement) -> Judgement:
     return j.model_copy(update={"score": min(1.0, max(0.0, j.score))})
 
 
-class ClaudeJudge:
-    def __init__(self, claude: StructuredClaude):
-        self.claude = claude
+class LLMJudge:
+    def __init__(self, llm: StructuredLLM):
+        self.llm = llm
 
     def judge(self, request, parsed, candidates, passages):
         if not candidates:
@@ -46,7 +46,7 @@ class ClaudeJudge:
             f"<handbook>\n{handbook or '(no passages found)'}\n</handbook>\n"
             f"<candidates>\n{json.dumps(profiles, indent=2)}\n</candidates>"
         )
-        result = self.claude.call(system=JUDGE_SYSTEM, prompt=prompt, schema=Judgements, effort="medium")
+        result = self.llm.call(system=JUDGE_SYSTEM, prompt=prompt, schema=Judgements, effort="medium")
         wanted = {v.id for v in candidates}
         return {j.volunteer_id: _clamp(j) for j in result.judgements if j.volunteer_id in wanted}
 

@@ -9,12 +9,13 @@ import uuid
 from functools import lru_cache
 
 import anthropic
+import openai
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-from .claude import ClaudeError, ClaudeRefusal
 from .config import MODES, Mode
 from .graph import Deps, build_deps, build_graph, run_match
+from .llm import LLMError, LLMRefusal
 from .schemas import MatchResponse, ServiceRequest
 
 
@@ -41,6 +42,7 @@ def create_app(deps: Deps | None = None) -> FastAPI:
         return {
             "status": "ok",
             "backend": d.settings.backend,
+            "model": getattr(getattr(d.parser, "llm", None), "model", None),
             "volunteers": len(d.volunteers),
             "handbook_chunks": len(d.store),
             "modes": list(MODES),
@@ -58,11 +60,11 @@ def create_app(deps: Deps | None = None) -> FastAPI:
         )
         try:
             return run_match(graph, request, body.mode or d.settings.mode)
-        except ClaudeRefusal as e:
+        except LLMRefusal as e:
             raise HTTPException(status_code=422, detail=str(e)) from e
-        except anthropic.RateLimitError as e:
-            raise HTTPException(status_code=503, detail="Claude API rate limited; retry shortly") from e
-        except (ClaudeError, anthropic.APIError) as e:
+        except (anthropic.RateLimitError, openai.RateLimitError) as e:
+            raise HTTPException(status_code=503, detail="LLM API rate limited; retry shortly") from e
+        except (LLMError, anthropic.APIError, openai.APIError) as e:
             raise HTTPException(status_code=502, detail=f"LLM call failed: {e}") from e
 
     return app

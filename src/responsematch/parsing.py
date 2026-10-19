@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from typing import Protocol
 
-from .claude import StructuredClaude
+from .llm import StructuredLLM
 from .schemas import ParsedRequest, ServiceRequest, Urgency
 
 PARSER_SYSTEM = """You triage community service requests (Seattle 311 style) for a volunteer \
@@ -22,14 +22,14 @@ class Parser(Protocol):
     def parse(self, request: ServiceRequest) -> ParsedRequest: ...
 
 
-class ClaudeParser:
-    def __init__(self, claude: StructuredClaude):
-        self.claude = claude
+class LLMParser:
+    def __init__(self, llm: StructuredLLM):
+        self.llm = llm
 
     def parse(self, request: ServiceRequest) -> ParsedRequest:
         hint = f"\nReported category: {request.category_hint}" if request.category_hint else ""
         prompt = f"<request>\n{request.text}\n</request>{hint}"
-        return self.claude.call(system=PARSER_SYSTEM, prompt=prompt, schema=ParsedRequest, effort="low")
+        return self.llm.call(system=PARSER_SYSTEM, prompt=prompt, schema=ParsedRequest, effort="low")
 
 
 # ── offline baseline: keyword rules, used for tests and development without an API key ──
