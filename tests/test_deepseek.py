@@ -19,7 +19,7 @@ def fake_client(captured: list, replies: list[str], finish_reason="stop") -> ope
         captured.append(request)
         content = replies[min(len(captured), len(replies)) - 1]
         return httpx2.Response(200, json={
-            "id": "chatcmpl-test", "object": "chat.completion", "created": 0, "model": "deepseek-chat",
+            "id": "chatcmpl-test", "object": "chat.completion", "created": 0, "model": "deepseek-v4.1-flash",
             "choices": [{"index": 0, "finish_reason": finish_reason,
                          "message": {"role": "assistant", "content": content}}],
             "usage": {"prompt_tokens": 10, "completion_tokens": 10, "total_tokens": 20},
@@ -39,7 +39,7 @@ def test_json_mode_request_and_validation():
 
     assert out.judgements[0].volunteer_id == "v1"
     body = json.loads(captured[0].content)
-    assert body["model"] == "deepseek-chat"
+    assert body["model"] == "deepseek-v4.1-flash"
     assert body["response_format"] == {"type": "json_object"}
     assert '"judgements"' in body["messages"][0]["content"]  # schema is in the system prompt
     assert str(captured[0].url).startswith("https://api.deepseek.com")
@@ -78,5 +78,5 @@ def test_judge_clamps_scores_from_any_backend():
 def test_backend_selection(monkeypatch):
     monkeypatch.setenv("DEEPSEEK_API_KEY", "x")
     llm = make_llm(Settings(backend="deepseek", model=""))
-    assert isinstance(llm, StructuredDeepSeek) and llm.model == "deepseek-chat"
+    assert isinstance(llm, StructuredDeepSeek) and llm.model == "deepseek-v4.1-flash"
     assert make_llm(Settings(backend="deepseek", model="deepseek-reasoner")).model == "deepseek-reasoner"

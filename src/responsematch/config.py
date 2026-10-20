@@ -22,7 +22,7 @@ def _env(name: str, default: str) -> str:
 class Settings:
     # which model provider runs the parser and the judge; "heuristic" = offline keyword baselines
     backend: Backend = field(
-        default_factory=lambda: _env("RESPONSEMATCH_BACKEND", "claude")  # type: ignore[arg-type]
+        default_factory=lambda: _env("RESPONSEMATCH_BACKEND", "deepseek")  # type: ignore[arg-type]
     )
     # empty = the backend's default model (see claude.py / deepseek.py)
     model: str = field(default_factory=lambda: _env("RESPONSEMATCH_MODEL", ""))

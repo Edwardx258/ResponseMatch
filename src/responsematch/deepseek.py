@@ -15,7 +15,7 @@ from pydantic import ValidationError
 
 from .llm import T, LLMError
 
-DEFAULT_MODEL = "deepseek-chat"  # check current model names in DeepSeek's API docs
+DEFAULT_MODEL = "deepseek-v4.1-flash"  # if the API reports an unknown model, check the name in DeepSeek's docs
 DEFAULT_BASE_URL = "https://api.deepseek.com"
 
 JSON_INSTRUCTIONS = (

@@ -27,8 +27,8 @@ Stack: Python · LangGraph · ChromaDB · FastAPI, with a pluggable LLM backend.
 
 | `RESPONSEMATCH_BACKEND` | Default model | Structured output | Key |
 |---|---|---|---|
+| `deepseek` (default) | `deepseek-v4.1-flash` | JSON mode; the schema is in the prompt and replies are validated, with one retry | `DEEPSEEK_API_KEY` |
 | `claude` | `claude-opus-5-5` | Schema-constrained structured outputs, server-side fallback on refusals | `ANTHROPIC_API_KEY` |
-| `deepseek` | `deepseek-chat` | JSON mode; the schema is in the prompt and replies are validated, with one retry | `DEEPSEEK_API_KEY` |
 | `heuristic` | — | Keyword rules, offline; for tests and development only | none |
 
 Set `RESPONSEMATCH_MODEL` to override the model. Both LLM backends implement the same
@@ -41,14 +41,15 @@ compares them on the same labelled set.
 uv sync
 uv run pytest                                            # offline, no API key needed
 
-# offline demo with keyword baselines instead of Claude
+# offline demo with keyword baselines instead of an LLM
 RESPONSEMATCH_BACKEND=heuristic uv run python scripts/demo.py
 
-# with Claude: set ANTHROPIC_API_KEY (or `ant auth login`), then
-uv run python scripts/demo.py
+# with DeepSeek (the default backend)
+DEEPSEEK_API_KEY=... uv run python scripts/demo.py
 
-# with DeepSeek
-DEEPSEEK_API_KEY=... RESPONSEMATCH_BACKEND=deepseek uv run python scripts/demo.py
+# with Claude: set ANTHROPIC_API_KEY (or `ant auth login`), then
+RESPONSEMATCH_BACKEND=claude uv run python scripts/demo.py
+
 uv run uvicorn responsematch.api:app --reload            # POST /match, GET /health
 ```
 
