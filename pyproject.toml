@@ -27,3 +27,12 @@ build-backend = "uv_build"
 dev = [
     "pytest>=9.1.1",
 ]
+
+[tool.uv]
+# Intel Macs: onnxruntime (pulled in by chromadb) stopped shipping macOS x86_64
+# wheels, so make the lock pick versions that still install there.
+required-environments = [
+    "sys_platform == 'darwin' and platform_machine == 'x86_64'",
+    "sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "sys_platform == 'linux' and platform_machine == 'x86_64'",
+]
